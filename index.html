@@ -120,56 +120,52 @@ body.standalone .app { padding-top: 44px; }
   transition: opacity 0.4s ease;
 }
 
-/* Ring + time display */
-.ring-wrap {
+/* ── Tomate que vai sendo comido ── */
+.tomato-wrap {
   position: relative;
-  width: 280px;
-  height: 280px;
-  margin-bottom: 40px;
+  width: min(280px, 62vw);
+  height: min(280px, 62vw);
+  margin-bottom: 8px;
   transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
 }
-.ring-svg {
+.tomato-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 10px 22px rgba(0,0,0,0.28));
+  -webkit-animation: tomatoIdle 4.5s ease-in-out infinite;
+  animation: tomatoIdle 4.5s ease-in-out infinite;
+}
+@-webkit-keyframes tomatoIdle { 0%,100% { -webkit-transform: translateY(0) rotate(-1deg); } 50% { -webkit-transform: translateY(-7px) rotate(1deg); } }
+@keyframes tomatoIdle { 0%,100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-7px) rotate(1deg); } }
+.tomato-wrap.chomp .tomato-svg {
+  -webkit-animation: chomp 0.4s ease;
+  animation: chomp 0.4s ease;
+}
+@-webkit-keyframes chomp { 0%,100% { -webkit-transform: scale(1) rotate(0); } 30% { -webkit-transform: scale(0.94) rotate(-3deg); } 65% { -webkit-transform: scale(1.03) rotate(2deg); } }
+@keyframes chomp { 0%,100% { transform: scale(1) rotate(0); } 30% { transform: scale(0.94) rotate(-3deg); } 65% { transform: scale(1.03) rotate(2deg); } }
+.tomato-wrap.eaten .tomato-svg { opacity: 0.3; -webkit-animation: none; animation: none; }
+.tomato-bite-circle { transition: r 0.35s cubic-bezier(0.34, 1.4, 0.64, 1); }
+
+/* migalhas de mordida */
+.crumb {
   position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  -webkit-transform: rotate(-90deg);
-  transform: rotate(-90deg);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  -webkit-animation: crumbFly 0.7s ease-out forwards;
+  animation: crumbFly 0.7s ease-out forwards;
 }
-.ring-bg {
-  fill: none;
-  stroke: rgba(0,0,0,0.08);
-  stroke-width: 8;
-}
-.ring-arc {
-  fill: none;
-  stroke: rgba(0,0,0,0.45);
-  stroke-width: 8;
-  stroke-linecap: round;
-  -webkit-transition: stroke-dashoffset 0.8s linear;
-  transition: stroke-dashoffset 0.8s linear;
-}
-.ring-inner {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: flex;
-  -webkit-box-orient: vertical;
-  -webkit-flex-direction: column;
-  flex-direction: column;
-  -webkit-box-pack: center;
-  -webkit-justify-content: center;
-  justify-content: center;
-  -webkit-box-align: center;
-  -webkit-align-items: center;
-  align-items: center;
-}
+@-webkit-keyframes crumbFly { 0% { opacity: 1; -webkit-transform: translate(0,0) scale(1); } 100% { opacity: 0; -webkit-transform: translate(var(--cx, 20px), var(--cy, 30px)) scale(0.2); } }
+@keyframes crumbFly { 0% { opacity: 1; transform: translate(0,0) scale(1); } 100% { opacity: 0; transform: translate(var(--cx, 20px), var(--cy, 30px)) scale(0.2); } }
+
 .timer-display {
-  font-size: 84px;
+  font-size: 76px;
   font-weight: 700;
-  letter-spacing: -4px;
+  letter-spacing: -3px;
   line-height: 1;
   color: #2a2a2a;
+  transition: color 0.6s ease, font-size 0.6s ease;
 }
 .timer-status {
   font-family: 'Courier New', Courier, monospace;
@@ -177,84 +173,9 @@ body.standalone .app { padding-top: 44px; }
   letter-spacing: 0.12em;
   text-transform: uppercase;
   opacity: 0.4;
-  margin-top: 10px;
-}
-
-/* ── Flip Clock ── */
-.flip-clock {
-  display: none;
-  gap: 2vw;
-  -webkit-box-align: center;
-  -webkit-align-items: center;
-  align-items: center;
-  -webkit-box-pack: center;
-  -webkit-justify-content: center;
-  justify-content: center;
-  margin-bottom: 4vh;
-  -webkit-transition: -webkit-transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
-  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
-}
-.flip-unit {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: flex;
-  -webkit-box-orient: vertical;
-  -webkit-flex-direction: column;
-  flex-direction: column;
-  -webkit-box-align: center;
-  -webkit-align-items: center;
-  align-items: center;
-  gap: 2vh;
-}
-.flip-card {
-  position: relative;
-  background: #fff;
-  color: #1a1a1a;
-  width: 40vw;
-  height: 55vh;
-  max-width: 460px;
-  max-height: 500px;
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: flex;
-  -webkit-box-align: center;
-  -webkit-align-items: center;
-  align-items: center;
-  -webkit-box-pack: center;
-  -webkit-justify-content: center;
-  justify-content: center;
-  font-size: 25vw;
-  font-weight: 800;
-  border-radius: 20px;
-  box-shadow: 0 15px 50px rgba(0,0,0,0.5);
-}
-@media screen and (min-width: 1025px) {
-  .flip-card { font-size: 280px; }
-}
-.flip-card::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 100%;
-  height: 3px;
-  background: rgba(0,0,0,0.1);
-  -webkit-transform: translateY(-50%);
-  transform: translateY(-50%);
-}
-.flip-label {
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 2vw;
-  text-transform: uppercase;
-  letter-spacing: 0.3em;
-  color: #fff;
-  opacity: 0.6;
-}
-.flip-colon {
-  font-size: 10vw;
-  color: #fff;
-  opacity: 0.3;
-  margin-top: -8vh;
+  margin-top: 8px;
+  margin-bottom: 22px;
+  transition: color 0.6s ease;
 }
 
 /* Controls */
@@ -353,19 +274,20 @@ body.is-running .nav {
   transform: translateY(20px);
   pointer-events: none;
 }
-body.is-running .ring-wrap {
-  display: none;
+body.is-running .timer-display {
+  color: #f4ede4;
+  font-size: 92px;
 }
-body.is-running .flip-clock {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: flex;
+body.is-running .timer-status { color: #f4ede4; }
+body.is-running .tomato-svg {
+  filter: drop-shadow(0 10px 26px rgba(0,0,0,0.55)) drop-shadow(0 0 40px rgba(255,120,80,0.18));
 }
 body.is-running .timer-name {
   opacity: 0.4;
   color: #fff;
   margin-bottom: 2vh;
 }
+body.is-running .home-chip { opacity: 0; pointer-events: none; }
 body.is-running .controls {
   opacity: 0.2;
 }
@@ -605,6 +527,25 @@ body.is-running .ctrl-btn.primary {
 .nav-tab.on { color: #2a2a2a; font-weight: 700; }
 .nav-tab:active { opacity: 0.6; }
 
+/* ── Chip de volta pro rafa.pro.br ── */
+.home-chip {
+  position: fixed;
+  top: 14px; left: 14px;
+  z-index: 300;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  color: rgba(0,0,0,0.55);
+  background: rgba(255,255,255,0.4);
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 999px;
+  padding: 7px 13px;
+  transition: opacity 0.3s, background 0.2s;
+}
+.home-chip:hover { background: rgba(255,255,255,0.7); }
+body.standalone .home-chip { top: 52px; }
+
 /* ── Toast ── */
 .toast {
   position: fixed;
@@ -635,6 +576,8 @@ body.is-running .ctrl-btn.primary {
 </head>
 <body>
 
+<a class="home-chip" href="https://rafa.pro.br/" title="Voltar pro rafa.pro.br">← rafa.pro.br</a>
+
 <div class="app" id="app">
 
   <!-- HEADER -->
@@ -646,29 +589,23 @@ body.is-running .ctrl-btn.primary {
   <div class="screen on" id="screen-timer">
     <div class="timer-wrap">
       <div class="timer-name" id="timer-name"></div>
-      <div class="ring-wrap">
-        <svg class="ring-svg" viewBox="0 0 260 260">
-          <circle class="ring-bg" cx="130" cy="130" r="115"/>
-          <circle class="ring-arc" id="ring-arc" cx="130" cy="130" r="115"/>
+
+      <!-- Tomate Fluent que vai sendo comido pelo tempo -->
+      <div class="tomato-wrap" id="tomato-wrap">
+        <svg class="tomato-svg" viewBox="0 0 100 100" aria-hidden="true">
+          <defs>
+            <mask id="bite-mask">
+              <rect width="100" height="100" fill="#fff"/>
+              <g id="bites"></g>
+            </mask>
+          </defs>
+          <image href="tomato.png" x="0" y="0" width="100" height="100" mask="url(#bite-mask)"/>
         </svg>
-        <div class="ring-inner">
-          <div class="timer-display" id="timer-display">25:00</div>
-          <div class="timer-status" id="timer-status">pronto</div>
-        </div>
+        <div id="crumbs" style="position:absolute;inset:0;pointer-events:none"></div>
       </div>
 
-      <!-- FLIP CLOCK -->
-      <div class="flip-clock" id="flip-clock">
-        <div class="flip-unit">
-          <div class="flip-card" id="flip-m">25</div>
-          <div class="flip-label">minutos</div>
-        </div>
-        <div class="flip-colon">:</div>
-        <div class="flip-unit">
-          <div class="flip-card" id="flip-s">00</div>
-          <div class="flip-label">segundos</div>
-        </div>
-      </div>
+      <div class="timer-display" id="timer-display">25:00</div>
+      <div class="timer-status" id="timer-status">pronto</div>
 
       <div class="controls">
         <button class="ctrl-btn secondary" id="btn-reset" onclick="resetTimer()">
@@ -861,24 +798,104 @@ function updateDisplay() {
   var sStr = pad(s);
 
   document.getElementById('timer-display').innerHTML = mStr + ':' + sStr;
-  
-  // Flip clock update
-  var fm = document.getElementById('flip-m');
-  var fs = document.getElementById('flip-s');
-  if (fm) fm.innerHTML = mStr;
-  if (fs) fs.innerHTML = sStr;
 
-  // Ring arc
-  var pct = totalSec > 0 ? remSec / totalSec : 1;
-  var arc = document.getElementById('ring-arc');
-  if (arc) {
-    arc.style.strokeDasharray = CIRC;
-    arc.style.strokeDashoffset = CIRC * (1 - pct);
-  }
+  // Tomate: mordidas comem a porcentagem que já passou
+  var pctGone = totalSec > 0 ? 1 - (remSec / totalSec) : 0;
+  updateBites(pctGone);
 
   // Name label
   var t = timers[curIdx];
   document.getElementById('timer-name').innerHTML = t ? t.name : '';
+}
+
+// ── Mordidas no tomate ────────────────────────────────────────
+// 10 mordidas escalopadas (3 dentadas cada) comendo em volta,
+// no sentido horário a partir do canto superior direito.
+var TOTAL_BITES = 10;
+var _biteCount = 0;
+var BITE_POS = (function () {
+  var pos = [];
+  for (var i = 0; i < TOTAL_BITES; i++) {
+    var a = (-55 + i * 36) * Math.PI / 180; // começa em cima à direita
+    pos.push({
+      x: 50 + Math.cos(a) * 41,
+      y: 56 + Math.sin(a) * 38,
+      a: a
+    });
+  }
+  return pos;
+})();
+
+function makeBite(i, animated) {
+  var g = document.getElementById('bites');
+  var p = BITE_POS[i];
+  var svgNS = 'http://www.w3.org/2000/svg';
+  // dentada principal + dois dentes menores ao longo da borda
+  var teeth = [
+    { dx: 0, dy: 0, r: 13 },
+    { dx: Math.cos(p.a + 1.35) * 9, dy: Math.sin(p.a + 1.35) * 9, r: 7.5 },
+    { dx: Math.cos(p.a - 1.35) * 9, dy: Math.sin(p.a - 1.35) * 9, r: 7.5 }
+  ];
+  for (var t = 0; t < teeth.length; t++) {
+    var c = document.createElementNS(svgNS, 'circle');
+    c.setAttribute('class', 'tomato-bite-circle');
+    c.setAttribute('cx', (p.x + teeth[t].dx).toFixed(1));
+    c.setAttribute('cy', (p.y + teeth[t].dy).toFixed(1));
+    c.setAttribute('fill', '#000');
+    c.setAttribute('data-bite', i);
+    c.setAttribute('r', animated ? 0 : teeth[t].r);
+    g.appendChild(c);
+    if (animated) {
+      (function (el, r) {
+        requestAnimationFrame(function () { el.setAttribute('r', r); });
+      })(c, teeth[t].r);
+    }
+  }
+}
+
+function spawnCrumbs(i) {
+  var p = BITE_POS[i];
+  var box = document.getElementById('crumbs');
+  var cols = ['#e8543f', '#f07a5a', '#c93b28', '#ffb3a0'];
+  for (var k = 0; k < 5; k++) {
+    var d = document.createElement('div');
+    d.className = 'crumb';
+    var z = 3 + Math.random() * 5;
+    var ang = p.a + (Math.random() - 0.5);
+    d.style.cssText = 'width:' + z + 'px;height:' + z + 'px;background:' + cols[k % cols.length]
+      + ';left:' + p.x + '%;top:' + p.y + '%'
+      + ';--cx:' + (Math.cos(ang) * (24 + Math.random() * 26)) + 'px'
+      + ';--cy:' + (Math.sin(ang) * 20 + 26 + Math.random() * 18) + 'px';
+    box.appendChild(d);
+    setTimeout(function (el) { return function () { el.remove(); }; }(d), 750);
+  }
+}
+
+function updateBites(pctGone) {
+  var target = Math.min(TOTAL_BITES, Math.floor(pctGone * TOTAL_BITES + 1e-9));
+  var wrap = document.getElementById('tomato-wrap');
+  if (target === _biteCount) {
+    // nada a fazer, só sincroniza estado final
+  } else if (target > _biteCount) {
+    var animate = (target - _biteCount) === 1; // mordida nova ao vivo
+    for (var i = _biteCount; i < target; i++) {
+      makeBite(i, animate);
+      if (animate) spawnCrumbs(i);
+    }
+    if (animate) {
+      wrap.classList.remove('chomp');
+      void wrap.offsetWidth;
+      wrap.classList.add('chomp');
+    }
+    _biteCount = target;
+  } else {
+    // reset / timer novo: tomate inteiro de novo
+    document.getElementById('bites').innerHTML = '';
+    _biteCount = 0;
+    if (target > 0) { for (var j = 0; j < target; j++) makeBite(j, false); _biteCount = target; }
+  }
+  if (_biteCount >= TOTAL_BITES) wrap.classList.add('eaten');
+  else wrap.classList.remove('eaten');
 }
 
 // ── Presets ───────────────────────────────────────────────────
