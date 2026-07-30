@@ -1,0 +1,169 @@
+/*
+ * RafaMass Blueprint System
+ * Version 1.0.0
+ * MIT License
+ *
+ * Apply data-rm-blueprint to a containing element, then use the rm-* classes.
+ * No external fonts, images, JavaScript or global reset are required.
+ */
+
+:where([data-rm-blueprint]) {
+  --rm-stage: #171a1d;
+  --rm-stage-deep: #0f1113;
+  --rm-paper: #f3eee4;
+  --rm-paper-high: #fbf8f1;
+  --rm-paper-deep: #e5dccd;
+  --rm-ink: #161817;
+  --rm-ink-soft: rgba(22, 24, 23, .66);
+  --rm-cyan: #86c7df;
+  --rm-cyan-strong: #36a7d2;
+  --rm-cyan-pale: #d8f0f8;
+  --rm-cyan-grid: rgba(34, 132, 172, .15);
+  --rm-vermilion: #ff5a19;
+  --rm-vermilion-deep: #cf3d0a;
+  --rm-red: #e31b36;
+  --rm-line-soft: rgba(22, 24, 23, .18);
+  --rm-line-mid: rgba(22, 24, 23, .42);
+  --rm-line-hard: #161817;
+  --rm-shadow-sm: 3px 4px 0 rgba(22, 24, 23, .22);
+  --rm-shadow-md: 7px 9px 0 rgba(22, 24, 23, .24);
+  --rm-shadow-stage: 0 30px 65px rgba(0, 0, 0, .42);
+  --rm-radius-object: clamp(14px, 4.2vw, 24px);
+  --rm-radius-key: clamp(8px, 2.6vw, 15px);
+  --rm-radius-control: 4px;
+  --rm-font-display: Arial, Helvetica, sans-serif;
+  --rm-font-editorial: Georgia, "Times New Roman", serif;
+  --rm-font-technical: "Courier New", Courier, monospace;
+  --rm-motion-fast: 90ms;
+  --rm-motion-slide: 190ms;
+  --rm-motion-reveal: 340ms;
+  --rm-impact-ease: cubic-bezier(.2, .8, .2, 1);
+  color: var(--rm-ink);
+  font-family: var(--rm-font-display);
+}
+
+[data-rm-blueprint],
+[data-rm-blueprint] *,
+[data-rm-blueprint] *::before,
+[data-rm-blueprint] *::after { box-sizing: border-box; }
+
+[data-rm-blueprint] :focus-visible {
+  outline: 3px solid var(--rm-cyan-pale);
+  outline-offset: 3px;
+}
+
+[data-rm-blueprint] .rm-surface {
+  position: relative;
+  color: var(--rm-ink);
+  border: 2px solid var(--rm-cyan-strong);
+  border-radius: var(--rm-radius-object);
+  background:
+    radial-gradient(circle at 2px 2px, rgba(22, 24, 23, .075) 1px, transparent 1.2px) 0 0 / 9px 9px,
+    linear-gradient(90deg, rgba(255,255,255,.27), transparent 32%),
+    var(--rm-paper);
+  box-shadow: var(--rm-shadow-md), var(--rm-shadow-stage), inset 0 1px rgba(255,255,255,.75);
+}
+
+[data-rm-blueprint] .rm-surface::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(54, 167, 210, .32);
+  border-radius: calc(var(--rm-radius-object) - 7px);
+  pointer-events: none;
+}
+
+[data-rm-blueprint] .rm-meta-strip {
+  border: 1px solid rgba(54, 167, 210, .58);
+  background: linear-gradient(90deg, transparent, rgba(134, 199, 223, .08), transparent), rgba(243, 238, 228, .96);
+  box-shadow: var(--rm-shadow-sm);
+}
+
+[data-rm-blueprint] .rm-command {
+  position: relative;
+  border: 1px solid var(--rm-ink);
+  border-radius: var(--rm-radius-control);
+  color: var(--rm-ink);
+  background: linear-gradient(180deg, rgba(255,255,255,.5), transparent 55%), var(--rm-paper);
+  box-shadow: 0 4px 0 var(--rm-ink);
+  font-family: var(--rm-font-technical);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  transition: transform var(--rm-motion-fast) ease, box-shadow var(--rm-motion-fast) ease, background var(--rm-motion-fast) ease;
+}
+
+[data-rm-blueprint] .rm-command:hover {
+  background: linear-gradient(180deg, rgba(255,255,255,.65), transparent 55%), var(--rm-paper-high);
+}
+
+[data-rm-blueprint] .rm-command:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--rm-ink);
+}
+
+[data-rm-blueprint] .rm-command[aria-pressed="false"] {
+  color: rgba(22, 24, 23, .62);
+  background: repeating-linear-gradient(135deg, transparent 0 5px, rgba(22,24,23,.045) 5px 6px), var(--rm-paper-deep);
+}
+
+[data-rm-blueprint] .rm-key {
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(22, 24, 23, .38);
+  border-radius: var(--rm-radius-key);
+  color: var(--rm-ink);
+  background: radial-gradient(circle at 34% 18%, rgba(255,255,255,.82), transparent 40%), linear-gradient(145deg, var(--rm-paper-high), var(--rm-paper-deep));
+  box-shadow: inset 2px 2px 2px rgba(255,255,255,.82), inset -2px -4px 8px rgba(22,24,23,.08), 0 6px 0 #bcb3a5, 0 10px 14px rgba(22,24,23,.23);
+}
+
+[data-rm-blueprint] .rm-key-signal {
+  color: #fff8f1;
+  background: radial-gradient(circle at 34% 18%, rgba(255,255,255,.32), transparent 40%), linear-gradient(145deg, #ff6a2c, var(--rm-vermilion));
+  box-shadow: inset 2px 2px 2px rgba(255,255,255,.32), inset -2px -4px 8px rgba(92,20,0,.11), 0 6px 0 var(--rm-vermilion-deep), 0 10px 14px rgba(92,20,0,.26);
+}
+
+[data-rm-blueprint] .rm-dossier {
+  position: relative;
+  border: 3px solid var(--rm-ink);
+  color: var(--rm-ink);
+  background: radial-gradient(circle at 2px 2px, rgba(22,24,23,.075) 1px, transparent 1.2px) 0 0 / 9px 9px, var(--rm-paper);
+  box-shadow: var(--rm-shadow-md);
+}
+
+[data-rm-blueprint] .rm-dossier::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 18px;
+  border-left: 2px dashed rgba(22, 24, 23, .52);
+  pointer-events: none;
+}
+
+[data-rm-blueprint] .rm-blueprint-grid {
+  background: repeating-linear-gradient(0deg, transparent 0 35px, rgba(54,167,210,.13) 35px 36px), repeating-linear-gradient(90deg, transparent 0 35px, rgba(54,167,210,.11) 35px 36px), var(--rm-paper);
+}
+
+[data-rm-blueprint] .rm-kicker {
+  color: #087da9;
+  font-family: var(--rm-font-technical);
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+[data-rm-blueprint] .rm-rule { height: 4px; border: 0; background: var(--rm-ink); }
+[data-rm-blueprint] .rm-signal { color: #fff; background: var(--rm-vermilion); }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-rm-blueprint] *,
+  [data-rm-blueprint] *::before,
+  [data-rm-blueprint] *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

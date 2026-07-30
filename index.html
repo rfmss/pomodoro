@@ -3,74 +3,152 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#cd7b5f">
-  <meta name="description" content="Temporizador Pomodoro local, simples e instalável.">
+  <meta name="theme-color" content="#171a1d">
+  <meta name="description" content="Pomodoro local e confiável com timer livre e ciclo de foco opcional.">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-terra.png">
+  <link rel="stylesheet" href="assets/css/rafamass-blueprint.css">
   <link rel="stylesheet" href="assets/css/app.css">
-  <title>Pomodoro</title>
+  <title>Pomodoro · RafaMass</title>
 </head>
-<body>
-  <a class="home-link" href="https://rafa.pro.br/" aria-label="Voltar para rafa.pro.br">← rafa.pro.br</a>
+<body data-rm-blueprint data-mode="free" data-status="idle">
+  <a class="skip-link" href="#clock">Pular para o relógio</a>
+  <a class="home-link rm-command" href="https://rafa.pro.br/" aria-label="Voltar para rafa.pro.br">← rafa.pro.br</a>
 
-  <main class="app" id="app">
-    <header class="app-header">
-      <p class="eyebrow">temporizador local</p>
-      <h1>Pomodoro</h1>
-    </header>
+  <div class="stage-shell">
+    <div class="technical-rail" aria-hidden="true">
+      <span>RF/MSS — UNIDADE DE FOCO</span>
+      <span>TEMPO LOCAL · SEM CONTA · OFFLINE</span>
+      <span id="rail-state">ESTADO / PRONTO</span>
+    </div>
 
-    <section class="timer-panel" aria-labelledby="timer-name">
-      <div class="timer-visual" aria-hidden="true">
-        <img src="tomato.png" alt="" width="280" height="280">
-        <div class="progress-mask" id="progress-mask"></div>
+    <main class="apparatus rm-surface" id="app">
+      <span class="blueprint-line blueprint-line-x" aria-hidden="true"></span>
+      <span class="blueprint-line blueprint-line-y" aria-hidden="true"></span>
+
+      <header class="apparatus-header">
+        <div>
+          <p class="rm-kicker">POMODORO // APARATO TEMPORAL</p>
+          <h1>Foco medido.</h1>
+        </div>
+        <div class="header-register" aria-label="Características do aplicativo">
+          <span>RELÓGIO ABSOLUTO</span>
+          <span>SESSÃO PERSISTENTE</span>
+          <span>PWA LOCAL</span>
+        </div>
+      </header>
+
+      <nav class="mode-switch rm-meta-strip" aria-label="Modo do temporizador">
+        <button type="button" id="mode-free" aria-pressed="true">Timer livre</button>
+        <button type="button" id="mode-cycle" aria-pressed="false">Ciclo Pomodoro</button>
+      </nav>
+
+      <div class="workbench">
+        <section class="clock-module" id="clock" aria-labelledby="session-name">
+          <div class="clock-register rm-meta-strip">
+            <span id="session-kind">SESSÃO LIVRE</span>
+            <span id="cycle-position">CONFIGURAÇÃO 01</span>
+          </div>
+
+          <div class="clock-face rm-blueprint-grid">
+            <div class="clock-copy">
+              <p class="session-name" id="session-name">foco</p>
+              <time class="timer-display" id="timer-display" datetime="PT25M">25:00</time>
+              <p class="timer-status" id="timer-status" aria-live="polite">pronto</p>
+            </div>
+
+            <div class="tomato-station" aria-hidden="true">
+              <div class="tomato-seal rm-key rm-key-signal">
+                <img src="assets/tomato-seal.svg" alt="" width="150" height="150">
+              </div>
+              <div class="progress-marks" id="progress-marks"></div>
+              <p>10 MARCAS / SESSÃO</p>
+            </div>
+          </div>
+
+          <div class="controls" aria-label="Controles do temporizador">
+            <button class="control rm-command" id="reset-button" type="button">Reiniciar</button>
+            <button class="control control-main rm-command" id="play-button" type="button" aria-pressed="false">Iniciar</button>
+            <button class="control rm-command" id="finish-button" type="button">Encerrar</button>
+          </div>
+
+          <p class="keyboard-hint">ESPAÇO: INICIAR OU PAUSAR · O TEMPO É RECALCULADO AO RETORNAR</p>
+        </section>
+
+        <aside class="session-module">
+          <section class="session-panel free-panel" aria-labelledby="preset-title">
+            <div class="panel-heading">
+              <div>
+                <p class="rm-kicker">BANCO LOCAL</p>
+                <h2 id="preset-title">Temporizadores</h2>
+              </div>
+              <button class="small-command rm-command" id="open-dialog" type="button">Novo</button>
+            </div>
+            <div class="preset-list" id="preset-list"></div>
+            <p class="empty-state" id="empty-state" hidden>Nenhum temporizador salvo. Crie um para começar.</p>
+          </section>
+
+          <section class="session-panel cycle-panel" aria-labelledby="cycle-title" hidden>
+            <div class="panel-heading">
+              <div>
+                <p class="rm-kicker">SEQUÊNCIA OPCIONAL</p>
+                <h2 id="cycle-title">Ciclo 4 × foco</h2>
+              </div>
+              <button class="small-command rm-command" id="reset-cycle" type="button">Voltar ao 1</button>
+            </div>
+            <ol class="cycle-list" id="cycle-list"></ol>
+            <p class="cycle-note">Quatro sessões de 25 minutos, pausas curtas de 5 e pausa longa de 15.</p>
+          </section>
+
+          <div class="privacy-note rm-meta-strip">
+            <span>DADOS</span>
+            <strong>NO DISPOSITIVO</strong>
+            <small>Sem cadastro ou nuvem obrigatória.</small>
+          </div>
+        </aside>
       </div>
 
-      <p class="timer-name" id="timer-name">foco</p>
-      <time class="timer-display" id="timer-display" datetime="PT25M">25:00</time>
-      <p class="timer-status" id="timer-status" aria-live="polite">pronto</p>
+      <footer class="apparatus-footer">
+        <span>PRECISÃO ANTES DO EFEITO.</span>
+        <span>O TOMATE MARCA O PROGRESSO; O RELÓGIO MANDA.</span>
+      </footer>
+    </main>
+  </div>
 
-      <div class="controls" aria-label="Controles do temporizador">
-        <button class="control secondary" id="reset-button" type="button">Reiniciar</button>
-        <button class="control primary" id="play-button" type="button" aria-pressed="false">Iniciar</button>
-        <button class="control secondary" id="finish-button" type="button">Encerrar</button>
-      </div>
-    </section>
-
-    <section class="preset-panel" aria-labelledby="preset-title">
-      <div class="section-line">
-        <h2 id="preset-title">Temporizadores</h2>
-        <button class="text-button" id="open-dialog" type="button">Novo</button>
-      </div>
-      <div class="preset-list" id="preset-list"></div>
-      <p class="empty-state" id="empty-state" hidden>Nenhum temporizador salvo. Crie um para começar.</p>
-    </section>
-  </main>
-
-  <dialog class="timer-dialog" id="timer-dialog" aria-labelledby="dialog-title">
+  <dialog class="timer-dialog rm-dossier" id="timer-dialog" aria-labelledby="dialog-title">
     <form method="dialog" id="timer-form">
       <div class="dialog-heading">
-        <p class="eyebrow">configuração local</p>
+        <p class="rm-kicker">CONFIGURAÇÃO LOCAL</p>
         <h2 id="dialog-title">Novo temporizador</h2>
       </div>
-
       <label for="timer-input-name">Nome</label>
       <input id="timer-input-name" name="name" type="text" maxlength="30" autocomplete="off" required>
-
       <label for="timer-input-minutes">Minutos</label>
       <input id="timer-input-minutes" name="minutes" type="number" min="1" max="999" inputmode="numeric" required>
-
       <p class="form-error" id="form-error" role="alert"></p>
-
       <div class="dialog-actions">
-        <button class="control secondary" value="cancel" type="button" id="cancel-dialog">Cancelar</button>
-        <button class="control primary" value="default" type="submit">Salvar</button>
+        <button class="control rm-command" value="cancel" type="button" id="cancel-dialog">Cancelar</button>
+        <button class="control control-main rm-command" value="default" type="submit">Salvar</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog class="completion-dialog rm-dossier" id="completion-dialog" aria-labelledby="completion-title">
+    <div class="completion-stamp" aria-hidden="true">CONCLUÍDA</div>
+    <p class="rm-kicker">REGISTRO DE SESSÃO</p>
+    <h2 id="completion-title">Sessão concluída.</h2>
+    <p id="completion-copy">O tempo terminou.</p>
+    <div class="completion-actions">
+      <button class="control rm-command" id="repeat-session" type="button">Repetir</button>
+      <button class="control control-main rm-command" id="next-session" type="button">Próxima sessão</button>
+      <button class="control rm-command" id="close-completion" type="button">Encerrar</button>
+    </div>
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="assets/js/timer-engine.js"></script>
+  <script src="assets/js/cycle-model.js"></script>
   <script src="assets/js/app.js"></script>
 </body>
 </html>
