@@ -1,8 +1,9 @@
 {
-  "name": "pomodoro",
-  "short_name": "pomodoro",
-  "description": "Timer pomodoro",
+  "name": "Pomodoro — RafaMass",
+  "short_name": "Pomodoro",
+  "description": "Temporizador local, simples e confiável.",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#cd7b5f",
   "theme_color": "#cd7b5f",
