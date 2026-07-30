@@ -1,10 +1,11 @@
-var CACHE = 'pomodoro-blueprint-v1';
+var CACHE = 'pomodoro-blueprint-v2';
 var CORE = [
   './',
   './index.html',
   './manifest.json',
   './assets/css/rafamass-blueprint.css',
   './assets/css/app.css',
+  './assets/css/composition.css',
   './assets/js/timer-engine.js',
   './assets/js/cycle-model.js',
   './assets/js/app.js',
