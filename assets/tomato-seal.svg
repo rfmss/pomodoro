@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-labelledby="title desc">
+  <title id="title">Selo de tomate</title>
+  <desc id="desc">Tomate técnico em vermelhão com linhas de construção cyan.</desc>
+  <g fill="none" stroke="#36a7d2" stroke-width="2" opacity=".7">
+    <circle cx="90" cy="94" r="66" stroke-dasharray="5 7"/>
+    <path d="M16 94h148M90 16v148"/>
+    <path d="M28 28h24M28 28v24M152 28h-24M152 28v24M28 152h24M28 152v-24M152 152h-24M152 152v-24"/>
+  </g>
+  <path d="M55 55c-18 11-29 32-29 55 0 34 27 58 64 58s64-24 64-58c0-23-11-44-29-55-17-10-53-10-70 0Z" fill="#ff5a19" stroke="#161817" stroke-width="6"/>
+  <path d="M90 59c-13-18-26-22-38-20 10 7 14 15 16 25-8-7-17-9-27-7 12 10 24 15 39 15h20c15 0 27-5 39-15-10-2-19 0-27 7 2-10 6-18 16-25-12-2-25 2-38 20Z" fill="#161817"/>
+  <path d="M90 55c-1-15 4-26 16-34" fill="none" stroke="#161817" stroke-width="7" stroke-linecap="square"/>
+  <path d="M53 116c12 18 57 24 77-1" fill="none" stroke="#fff8f1" stroke-width="5" opacity=".45"/>
+  <text x="90" y="111" text-anchor="middle" fill="#fff8f1" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700">25</text>
+  <text x="90" y="132" text-anchor="middle" fill="#fff8f1" font-family="Courier New, monospace" font-size="10" font-weight="700" letter-spacing="2">MIN</text>
+</svg>
