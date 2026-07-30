@@ -9,6 +9,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icon-terra.png">
   <link rel="stylesheet" href="assets/css/rafamass-blueprint.css">
   <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/composition.css">
   <title>Pomodoro · RafaMass</title>
 </head>
 <body data-rm-blueprint data-mode="free" data-status="idle">
@@ -57,12 +58,25 @@
               <p class="timer-status" id="timer-status" aria-live="polite">pronto</p>
             </div>
 
-            <div class="tomato-station" aria-hidden="true">
-              <div class="tomato-seal rm-key rm-key-signal">
-                <img src="assets/tomato-seal.svg" alt="" width="150" height="150">
+            <div class="tomato-station" aria-label="Progresso visual da sessão">
+              <div class="station-heading" aria-hidden="true">
+                <span>MARCADOR DE SESSÃO</span>
+                <strong>10 ETAPAS</strong>
               </div>
-              <div class="progress-marks" id="progress-marks"></div>
-              <p>10 MARCAS / SESSÃO</p>
+
+              <div class="tomato-field" aria-hidden="true">
+                <div class="tomato-seal rm-key rm-key-signal">
+                  <img src="assets/tomato-seal.svg" alt="" width="150" height="150">
+                </div>
+              </div>
+
+              <div class="progress-block" aria-hidden="true">
+                <div class="progress-register">
+                  <span>PROGRESSO</span>
+                  <strong>1 MARCA = 10%</strong>
+                </div>
+                <div class="progress-marks" id="progress-marks"></div>
+              </div>
             </div>
           </div>
 
