@@ -1,12 +1,14 @@
-var CACHE = 'pomodoro-foundation-v1';
+var CACHE = 'pomodoro-blueprint-v1';
 var CORE = [
   './',
   './index.html',
   './manifest.json',
+  './assets/css/rafamass-blueprint.css',
   './assets/css/app.css',
   './assets/js/timer-engine.js',
+  './assets/js/cycle-model.js',
   './assets/js/app.js',
-  './tomato.png',
+  './assets/tomato-seal.svg',
   './icon-terra.png',
   './icon-terra-192.png',
   './icon-terra-512.png'
