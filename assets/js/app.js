@@ -3,6 +3,7 @@
 
   var TIMER_KEY = 'pomodoro_v1';
   var SESSION_KEY = 'pomodoro_session_v2';
+  var PREFERENCES_KEY = 'pomodoro_preferences_v1';
   var MAX_TIMERS = 3;
   var DEFAULT_TIMERS = [
     { id: 't1', name: 'foco', minutes: 25 },
@@ -11,42 +12,73 @@
 
   var elements = {
     body: document.body,
-    name: document.getElementById('timer-name'),
+    railState: document.getElementById('rail-state'),
+    kind: document.getElementById('session-kind'),
+    position: document.getElementById('cycle-position'),
+    name: document.getElementById('session-name'),
     display: document.getElementById('timer-display'),
     status: document.getElementById('timer-status'),
-    progress: document.getElementById('progress-mask'),
+    marks: document.getElementById('progress-marks'),
     play: document.getElementById('play-button'),
     reset: document.getElementById('reset-button'),
     finish: document.getElementById('finish-button'),
-    list: document.getElementById('preset-list'),
+    modeFree: document.getElementById('mode-free'),
+    modeCycle: document.getElementById('mode-cycle'),
+    freePanel: document.querySelector('.free-panel'),
+    cyclePanel: document.querySelector('.cycle-panel'),
+    presetList: document.getElementById('preset-list'),
+    cycleList: document.getElementById('cycle-list'),
     empty: document.getElementById('empty-state'),
     openDialog: document.getElementById('open-dialog'),
+    resetCycle: document.getElementById('reset-cycle'),
     dialog: document.getElementById('timer-dialog'),
     cancelDialog: document.getElementById('cancel-dialog'),
     form: document.getElementById('timer-form'),
     inputName: document.getElementById('timer-input-name'),
     inputMinutes: document.getElementById('timer-input-minutes'),
     formError: document.getElementById('form-error'),
+    completionDialog: document.getElementById('completion-dialog'),
+    completionTitle: document.getElementById('completion-title'),
+    completionCopy: document.getElementById('completion-copy'),
+    repeatSession: document.getElementById('repeat-session'),
+    nextSession: document.getElementById('next-session'),
+    closeCompletion: document.getElementById('close-completion'),
     toast: document.getElementById('toast')
   };
 
   var timers = loadTimers();
-  var selectedId = timers.length ? timers[0].id : null;
+  var preferences = loadPreferences();
+  var mode = preferences.mode === 'cycle' ? 'cycle' : 'free';
+  var selectedId = timers.some(function (timer) { return timer.id === preferences.selectedId; })
+    ? preferences.selectedId
+    : (timers.length ? timers[0].id : null);
+  var cycle = new CycleModel();
+  cycle.restore(preferences.cycle);
+
   var tickHandle = null;
   var toastHandle = null;
-  var activeAudio = null;
+  var audioContext = null;
+  var activeVoice = null;
+  var lastMarkCount = -1;
 
+  var descriptor = currentDescriptor();
   var engine = new TimerEngine({
-    durationMs: selectedTimer() ? selectedTimer().minutes * 60000 : 0,
+    durationMs: descriptor ? descriptor.minutes * 60000 : 0,
     onChange: handleEngineChange,
     onComplete: handleCompletion
   });
 
+  buildProgressMarks();
   restoreSession();
   renderPresets();
+  renderCycle();
+  renderMode();
   render(engine.snapshotWithoutSync());
   registerEvents();
   registerServiceWorker();
+  window.requestAnimationFrame(function () {
+    window.requestAnimationFrame(function () { document.documentElement.classList.add('page-ready'); });
+  });
 
   function normalizeTimer(timer) {
     if (!timer || typeof timer !== 'object') return null;
@@ -76,6 +108,23 @@
     try { localStorage.setItem(TIMER_KEY, JSON.stringify({ timers: timers })); } catch (error) {}
   }
 
+  function loadPreferences() {
+    try {
+      var raw = localStorage.getItem(PREFERENCES_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (error) { return {}; }
+  }
+
+  function savePreferences() {
+    try {
+      localStorage.setItem(PREFERENCES_KEY, JSON.stringify({
+        mode: mode,
+        selectedId: selectedId,
+        cycle: cycle.snapshot()
+      }));
+    } catch (error) {}
+  }
+
   function loadSession() {
     try {
       var raw = localStorage.getItem(SESSION_KEY);
@@ -85,19 +134,26 @@
 
   function saveSession(snapshot) {
     try {
-      localStorage.setItem(SESSION_KEY, JSON.stringify({ selectedId: selectedId, engine: snapshot }));
+      localStorage.setItem(SESSION_KEY, JSON.stringify({
+        mode: mode,
+        selectedId: selectedId,
+        cycle: cycle.snapshot(),
+        engine: snapshot
+      }));
     } catch (error) {}
   }
 
   function restoreSession() {
     var session = loadSession();
-    if (!session) return;
-    var found = timers.some(function (timer) { return timer.id === session.selectedId; });
-    if (!found) return;
-    selectedId = session.selectedId;
-    var timer = selectedTimer();
-    if (!timer || !session.engine || Number(session.engine.durationMs) !== timer.minutes * 60000) {
-      engine.setDuration(timer ? timer.minutes * 60000 : 0);
+    if (!session || !session.engine) return;
+
+    if (session.mode === 'cycle' || session.mode === 'free') mode = session.mode;
+    if (timers.some(function (timer) { return timer.id === session.selectedId; })) selectedId = session.selectedId;
+    cycle.restore(session.cycle);
+
+    var current = currentDescriptor();
+    if (!current || Number(session.engine.durationMs) !== current.minutes * 60000) {
+      engine.setDuration(current ? current.minutes * 60000 : 0);
       return;
     }
     engine.restore(session.engine);
@@ -108,6 +164,37 @@
       if (timers[index].id === selectedId) return timers[index];
     }
     return null;
+  }
+
+  function currentDescriptor() {
+    if (mode === 'cycle') {
+      var step = cycle.current();
+      return {
+        id: step.id,
+        name: step.label,
+        minutes: step.minutes,
+        type: step.type,
+        kind: step.type === 'focus' ? 'SESSÃO DE FOCO' : (step.type === 'long-break' ? 'PAUSA LONGA' : 'PAUSA CURTA'),
+        position: 'ETAPA ' + String(step.index + 1).padStart(2, '0') + ' / ' + String(step.total).padStart(2, '0')
+      };
+    }
+
+    var timer = selectedTimer();
+    if (!timer) return null;
+    return {
+      id: timer.id,
+      name: timer.name,
+      minutes: timer.minutes,
+      type: 'free',
+      kind: 'SESSÃO LIVRE',
+      position: 'DURAÇÃO / ' + timer.minutes + ' MIN'
+    };
+  }
+
+  function applyCurrentDuration() {
+    descriptor = currentDescriptor();
+    engine.setDuration(descriptor ? descriptor.minutes * 60000 : 0);
+    savePreferences();
   }
 
   function generateId() {
@@ -129,22 +216,58 @@
     return 'pronto';
   }
 
+  function buildProgressMarks() {
+    elements.marks.replaceChildren();
+    for (var index = 0; index < 10; index++) {
+      var mark = document.createElement('span');
+      mark.className = 'progress-mark';
+      elements.marks.appendChild(mark);
+    }
+  }
+
+  function renderProgress(snapshot) {
+    var elapsed = snapshot.durationMs > 0 ? 1 - (snapshot.remainingMs / snapshot.durationMs) : 0;
+    var count = Math.max(0, Math.min(10, Math.floor(elapsed * 10 + 0.000001)));
+    var marks = elements.marks.children;
+    for (var index = 0; index < marks.length; index++) marks[index].classList.toggle('done', index < count);
+    if (count !== lastMarkCount && lastMarkCount >= 0 && count > lastMarkCount) {
+      var seal = document.querySelector('.tomato-seal');
+      if (seal && typeof seal.animate === 'function') {
+        seal.animate([{ transform: 'rotate(1.2deg) scale(1)' }, { transform: 'rotate(-1deg) scale(.96)' }, { transform: 'rotate(1.2deg) scale(1)' }], { duration: 220, easing: 'ease-out' });
+      }
+    }
+    lastMarkCount = count;
+  }
+
   function render(snapshot) {
-    var timer = selectedTimer();
-    var ratio = snapshot.durationMs > 0 ? snapshot.remainingMs / snapshot.durationMs : 0;
-    elements.name.textContent = timer ? timer.name : 'sem temporizador';
+    descriptor = currentDescriptor();
+    elements.name.textContent = descriptor ? descriptor.name : 'sem temporizador';
+    elements.kind.textContent = descriptor ? descriptor.kind : 'SEM CONFIGURAÇÃO';
+    elements.position.textContent = descriptor ? descriptor.position : 'DURAÇÃO / 00 MIN';
     elements.display.textContent = formatTime(snapshot.remainingMs);
     elements.display.setAttribute('datetime', 'PT' + Math.ceil(snapshot.remainingMs / 1000) + 'S');
     elements.status.textContent = statusLabel(snapshot.status);
-    elements.progress.style.setProperty('--remaining-turn', Math.max(0, Math.min(1, ratio)) + 'turn');
+    elements.railState.textContent = 'ESTADO / ' + statusLabel(snapshot.status).toUpperCase();
     elements.play.textContent = snapshot.status === 'running' ? 'Pausar' : (snapshot.status === 'paused' ? 'Continuar' : 'Iniciar');
     elements.play.setAttribute('aria-pressed', snapshot.status === 'running' ? 'true' : 'false');
-    elements.play.disabled = !timer;
-    elements.reset.disabled = !timer;
-    elements.finish.disabled = !timer || snapshot.status === 'complete';
-    elements.body.classList.toggle('is-running', snapshot.status === 'running');
-    document.title = timer ? formatTime(snapshot.remainingMs) + ' · ' + timer.name : 'Pomodoro';
+    elements.play.disabled = !descriptor;
+    elements.reset.disabled = !descriptor;
+    elements.finish.disabled = !descriptor || snapshot.status === 'complete';
+    elements.body.dataset.status = snapshot.status;
+    elements.body.dataset.mode = mode;
+    elements.body.dataset.sessionType = descriptor ? descriptor.type : 'empty';
+    document.title = descriptor ? formatTime(snapshot.remainingMs) + ' · ' + descriptor.name : 'Pomodoro · RafaMass';
+    renderProgress(snapshot);
     manageTicking(snapshot.status === 'running');
+  }
+
+  function renderMode() {
+    var free = mode === 'free';
+    elements.modeFree.setAttribute('aria-pressed', free ? 'true' : 'false');
+    elements.modeCycle.setAttribute('aria-pressed', free ? 'false' : 'true');
+    elements.freePanel.hidden = !free;
+    elements.cyclePanel.hidden = free;
+    elements.body.dataset.mode = mode;
   }
 
   function handleEngineChange(snapshot) {
@@ -153,8 +276,9 @@
   }
 
   function handleCompletion() {
-    playCompletionSound();
-    showToast('temporizador concluído');
+    playSound('complete');
+    if (navigator.vibrate) navigator.vibrate(35);
+    openCompletion();
   }
 
   function manageTicking(shouldRun) {
@@ -166,16 +290,38 @@
     }
   }
 
-  function selectTimer(id) {
-    if (selectedId === id) return;
-    selectedId = id;
-    var timer = selectedTimer();
-    engine.setDuration(timer ? timer.minutes * 60000 : 0);
+  function setMode(nextMode) {
+    if (nextMode !== 'free' && nextMode !== 'cycle') return;
+    if (mode === nextMode) return;
+    mode = nextMode;
+    lastMarkCount = -1;
+    applyCurrentDuration();
+    renderMode();
     renderPresets();
+    renderCycle();
+    playSound('tap');
+  }
+
+  function selectTimer(id) {
+    if (mode !== 'free' || selectedId === id) return;
+    selectedId = id;
+    lastMarkCount = -1;
+    applyCurrentDuration();
+    renderPresets();
+    playSound('tap');
+  }
+
+  function selectCycleStep(index) {
+    if (mode !== 'cycle') return;
+    cycle.goTo(index);
+    lastMarkCount = -1;
+    applyCurrentDuration();
+    renderCycle();
+    playSound('tap');
   }
 
   function renderPresets() {
-    elements.list.replaceChildren();
+    elements.presetList.replaceChildren();
     elements.empty.hidden = timers.length > 0;
     elements.openDialog.disabled = timers.length >= MAX_TIMERS;
 
@@ -187,7 +333,11 @@
       select.type = 'button';
       select.className = 'preset-select';
       select.setAttribute('aria-pressed', timer.id === selectedId ? 'true' : 'false');
-      select.textContent = timer.name + ' · ' + timer.minutes + ' min';
+      var label = document.createElement('span');
+      label.textContent = timer.name;
+      var duration = document.createElement('span');
+      duration.textContent = timer.minutes + ' min';
+      select.append(label, duration);
       select.addEventListener('click', function () { selectTimer(timer.id); });
 
       var remove = document.createElement('button');
@@ -198,7 +348,26 @@
       remove.addEventListener('click', function () { deleteTimer(timer.id); });
 
       item.append(select, remove);
-      elements.list.appendChild(item);
+      elements.presetList.appendChild(item);
+    });
+  }
+
+  function renderCycle() {
+    elements.cycleList.replaceChildren();
+    CycleModel.steps().forEach(function (step) {
+      var item = document.createElement('li');
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'cycle-step';
+      if (step.index === cycle.index) button.setAttribute('aria-current', 'step');
+      var label = document.createElement('span');
+      label.textContent = step.label;
+      var duration = document.createElement('span');
+      duration.textContent = step.minutes + ' min';
+      button.append(label, duration);
+      button.addEventListener('click', function () { selectCycleStep(step.index); });
+      item.appendChild(button);
+      elements.cycleList.appendChild(item);
     });
   }
 
@@ -206,10 +375,11 @@
     timers = timers.filter(function (timer) { return timer.id !== id; });
     if (selectedId === id) selectedId = timers.length ? timers[0].id : null;
     saveTimers();
-    var timer = selectedTimer();
-    engine.setDuration(timer ? timer.minutes * 60000 : 0);
+    if (mode === 'free') applyCurrentDuration();
+    else savePreferences();
     renderPresets();
     showToast('temporizador removido');
+    playSound('tap');
   }
 
   function openDialog() {
@@ -246,11 +416,53 @@
     var timer = { id: generateId(), name: name, minutes: minutes };
     timers.push(timer);
     selectedId = timer.id;
+    mode = 'free';
     saveTimers();
-    engine.setDuration(minutes * 60000);
+    applyCurrentDuration();
+    renderMode();
     renderPresets();
     closeDialog();
     showToast('temporizador salvo');
+    playSound('tap');
+  }
+
+  function openCompletion() {
+    descriptor = currentDescriptor();
+    elements.completionTitle.textContent = descriptor && descriptor.type === 'focus' ? 'Foco concluído.' : 'Sessão concluída.';
+    elements.completionCopy.textContent = mode === 'cycle'
+      ? 'A etapa ' + String(cycle.index + 1).padStart(2, '0') + ' terminou. A próxima está pronta para ser carregada.'
+      : 'O temporizador “' + (descriptor ? descriptor.name : 'livre') + '” chegou ao fim.';
+    elements.nextSession.hidden = mode !== 'cycle';
+    if (typeof elements.completionDialog.showModal === 'function') elements.completionDialog.showModal();
+    else elements.completionDialog.setAttribute('open', '');
+  }
+
+  function closeCompletion() {
+    if (typeof elements.completionDialog.close === 'function') elements.completionDialog.close();
+    else elements.completionDialog.removeAttribute('open');
+  }
+
+  function repeatSession() {
+    closeCompletion();
+    lastMarkCount = -1;
+    engine.reset();
+    playSound('tap');
+  }
+
+  function nextSession() {
+    closeCompletion();
+    if (mode === 'cycle') cycle.next();
+    lastMarkCount = -1;
+    applyCurrentDuration();
+    renderCycle();
+    playSound('tap');
+  }
+
+  function endCompletion() {
+    closeCompletion();
+    lastMarkCount = -1;
+    engine.reset();
+    playSound('tap');
   }
 
   function showToast(message) {
@@ -260,54 +472,89 @@
     toastHandle = window.setTimeout(function () { elements.toast.classList.remove('visible'); }, 1800);
   }
 
-  function stopActiveAudio() {
-    if (!activeAudio) return;
-    try {
-      var now = activeAudio.context.currentTime;
-      activeAudio.gain.gain.cancelScheduledValues(now);
-      activeAudio.gain.gain.setValueAtTime(Math.max(.0001, activeAudio.gain.gain.value), now);
-      activeAudio.gain.gain.exponentialRampToValueAtTime(.0001, now + .007);
-      activeAudio.oscillator.stop(now + .009);
-    } catch (error) {}
-    activeAudio = null;
+  function ensureAudioContext() {
+    if (audioContext) return audioContext;
+    var AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return null;
+    audioContext = new AudioContext();
+    return audioContext;
   }
 
-  function playCompletionSound() {
-    stopActiveAudio();
+  function stopActiveVoice() {
+    if (!activeVoice || !audioContext) return;
     try {
-      var AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return;
-      var context = new AudioContext();
-      var oscillator = context.createOscillator();
-      var gain = context.createGain();
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(523.25, context.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(659.25, context.currentTime + .18);
-      gain.gain.setValueAtTime(.0001, context.currentTime);
-      gain.gain.exponentialRampToValueAtTime(.12, context.currentTime + .018);
-      gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + .42);
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-      oscillator.start();
-      oscillator.stop(context.currentTime + .44);
-      activeAudio = { context: context, oscillator: oscillator, gain: gain };
-      oscillator.addEventListener('ended', function () {
-        if (activeAudio && activeAudio.oscillator === oscillator) activeAudio = null;
-        context.close().catch(function () {});
-      });
+      var now = audioContext.currentTime;
+      activeVoice.gain.gain.cancelScheduledValues(now);
+      activeVoice.gain.gain.setValueAtTime(Math.max(.0001, activeVoice.gain.gain.value), now);
+      activeVoice.gain.gain.exponentialRampToValueAtTime(.0001, now + .007);
+      activeVoice.oscillator.stop(now + .009);
     } catch (error) {}
+    activeVoice = null;
+  }
+
+  function playSound(kind) {
+    var context = ensureAudioContext();
+    if (!context) return;
+    if (context.state === 'suspended') context.resume().catch(function () {});
+    stopActiveVoice();
+
+    var oscillator = context.createOscillator();
+    var gain = context.createGain();
+    var filter = context.createBiquadFilter();
+    var now = context.currentTime;
+    filter.type = 'lowpass';
+    filter.frequency.value = 1800;
+    oscillator.type = 'sine';
+
+    if (kind === 'complete') {
+      oscillator.frequency.setValueAtTime(440, now);
+      oscillator.frequency.exponentialRampToValueAtTime(659.25, now + .28);
+      gain.gain.setValueAtTime(.0001, now);
+      gain.gain.exponentialRampToValueAtTime(.12, now + .02);
+      gain.gain.exponentialRampToValueAtTime(.0001, now + .52);
+    } else {
+      oscillator.frequency.setValueAtTime(330, now);
+      oscillator.frequency.exponentialRampToValueAtTime(270, now + .07);
+      gain.gain.setValueAtTime(.0001, now);
+      gain.gain.exponentialRampToValueAtTime(.035, now + .008);
+      gain.gain.exponentialRampToValueAtTime(.0001, now + .085);
+    }
+
+    oscillator.connect(filter);
+    filter.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(now);
+    if (kind === 'complete') oscillator.stop(now + .54);
+    else oscillator.stop(now + .09);
+    activeVoice = { oscillator: oscillator, gain: gain };
+    oscillator.addEventListener('ended', function () {
+      if (activeVoice && activeVoice.oscillator === oscillator) activeVoice = null;
+    });
   }
 
   function registerEvents() {
     elements.play.addEventListener('click', function () {
+      playSound('tap');
       if (engine.status === 'running') engine.pause();
       else engine.start();
     });
-    elements.reset.addEventListener('click', function () { engine.reset(); });
-    elements.finish.addEventListener('click', function () { engine.complete(); });
-    elements.openDialog.addEventListener('click', openDialog);
-    elements.cancelDialog.addEventListener('click', closeDialog);
+    elements.reset.addEventListener('click', function () { playSound('tap'); lastMarkCount = -1; engine.reset(); });
+    elements.finish.addEventListener('click', function () { playSound('tap'); engine.complete(); });
+    elements.modeFree.addEventListener('click', function () { setMode('free'); });
+    elements.modeCycle.addEventListener('click', function () { setMode('cycle'); });
+    elements.openDialog.addEventListener('click', function () { playSound('tap'); openDialog(); });
+    elements.cancelDialog.addEventListener('click', function () { playSound('tap'); closeDialog(); });
     elements.form.addEventListener('submit', saveNewTimer);
+    elements.resetCycle.addEventListener('click', function () {
+      cycle.reset();
+      lastMarkCount = -1;
+      applyCurrentDuration();
+      renderCycle();
+      playSound('tap');
+    });
+    elements.repeatSession.addEventListener('click', repeatSession);
+    elements.nextSession.addEventListener('click', nextSession);
+    elements.closeCompletion.addEventListener('click', endCompletion);
 
     elements.dialog.addEventListener('click', function (event) {
       if (event.target === elements.dialog) closeDialog();
@@ -318,13 +565,18 @@
     });
     window.addEventListener('focus', function () { engine.sync(); });
     window.addEventListener('pageshow', function () { engine.sync(); });
-    window.addEventListener('beforeunload', function () { saveSession(engine.snapshot()); });
+    window.addEventListener('beforeunload', function () {
+      savePreferences();
+      saveSession(engine.snapshot());
+    });
 
     document.addEventListener('keydown', function (event) {
       var target = event.target;
       var editing = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
-      if (!editing && event.code === 'Space' && !elements.dialog.open) {
+      var dialogOpen = elements.dialog.open || elements.completionDialog.open;
+      if (!editing && event.code === 'Space' && !dialogOpen) {
         event.preventDefault();
+        playSound('tap');
         if (engine.status === 'running') engine.pause();
         else engine.start();
       }
